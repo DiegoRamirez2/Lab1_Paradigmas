@@ -51,4 +51,4 @@
 (define simbolsCard (lambda (n)
                    (+ (/ (- (sqrt (- (* 4 n) 3)) 1) 2) 1)))
 
-(createNcard (list 1 "Hola" 3 "XD" 5 "Ramo" 7 8 9 24+3i 11 "culiao" 13))
+(createNcard (list 1 "Hola" 3 "XD" 5 "Ramo" 7 8 9 24+3i 11 "ola" 13))
