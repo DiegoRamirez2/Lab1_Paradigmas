@@ -1,0 +1,133 @@
+#lang racket
+;-----------------------------------CONSTRUCTORES---------------------------------------------------------------
+
+; Dominio: Una lista con elementos de tipo string, dos números enteros y una función random propia
+; Recorrido: Set de cartas (cardsSet) del juego Dobble
+; Descripción: Crea una lista con sublistas que representan el mazo de cartas del juego Dobble
+; Tipo de Recursión: Recursión de Cola
+(define cardsSet (lambda (Elements numE maxC rndFn)
+                  (if (<= maxC 0)
+                      (totalCards (rndFn (subLista Elements (simbolsTotal (- numE 1)))))
+                      (subLista (totalCards (rndFn (subLista Elements (simbolsTotal (- numE 1))))) maxC))))
+
+; Función auxiliar que crea la primera carta
+(define firstCard (lambda (lista_elemento)
+                          (firstCardAux lista_elemento 0)))
+(define firstCardAux (lambda (lista iterador)
+                       (if (= (simbolsCard(length lista)) iterador)
+                           null
+                          (cons (list-ref lista iterador) (firstCardAux lista (+ iterador 1))))))
+(define createNcard (lambda (lista_elemento)
+                         (cons (firstCard lista_elemento) (createNcardAux lista_elemento 1))))
+
+; Función auxiliar que crea las N siguientes cartas
+(define createNcardAux (lambda (lista_elemento iterador1)
+                      (if (= (simbolsCard (length lista_elemento)) iterador1)
+                          null
+                          (cons (cons (list-ref lista_elemento 0) (createNcardAux2 lista_elemento iterador1 2)) (createNcardAux lista_elemento (+ iterador1 1))))))
+(define createNcardAux2 (lambda (lista_elemento iterador1 iterador2)
+                       (if (< (simbolsCard (length lista_elemento)) iterador2)
+                           null                                                                                        
+                           (cons (list-ref lista_elemento (- (+ (* (- (simbolsCard (length lista_elemento)) 1) iterador1) iterador2) 1)) (createNcardAux2 lista_elemento iterador1 (+ iterador2 1))))))
+
+(define totalCards (lambda (lista_elemento)
+                         (append (createNcard lista_elemento) (SquareCards lista_elemento 1))))
+
+; Función auxiliar que crea las N^2 siguientes cartas
+(define SquareCards (lambda (lista_elemento i)
+                         (if (= (simbolsCard (length lista_elemento)) i)
+                             null
+                             (append2 (SquareCardsAux lista_elemento i 1) (SquareCards lista_elemento (+ i 1)))))) 
+(define SquareCardsAux (lambda (lista_elemento i j)
+                       (if (= (simbolsCard (length lista_elemento)) j)
+                           null
+                           (cons (cons (list-ref lista_elemento i) (SquareCardsAux2 lista_elemento i j 1)) (SquareCardsAux lista_elemento i (+ j 1))))))
+(define SquareCardsAux2 (lambda (lista_elemento i j k)
+                          (if (< (- (simbolsCard (length lista_elemento)) 1) k)
+                              null
+                              (cons (list-ref lista_elemento (-(calculoValor (- (simbolsCard (length lista_elemento))1) i j k) 1)) (SquareCardsAux2 lista_elemento i j (+ k 1))))))
+(define calculoValor (lambda (n i j k)
+                       (+ (+ n 2) (* n (- k 1)) (modulo (+ (* (- i 1) (- k 1)) (- j 1)) n))))
+
+; Función que obtiene una SubLista de una lista
+(define subLista (lambda (lista numE)
+                   (subListaAux lista numE 0)))
+(define subListaAux (lambda (lista numE acum)
+                      (if (= acum numE)
+                          null
+                          (cons (list-ref lista acum) (subListaAux lista numE (+ acum 1))))))
+
+; Función que calcula los símbolos que hay por carta a través del largo de la lista de elementos
+(define simbolsCard (lambda (n)
+                   (+ (/ (- (sqrt (- (* 4 n) 3)) 1) 2) 1)))
+
+; Función que calcula cuántos simbolos hay en total dado el número de elementos por carta
+(define simbolsTotal (lambda (n)
+                       (+ (+ (* n n) n) 1)))
+
+; Función Append propia
+(define append2 (lambda (lis1 lis2)
+  (cond ((null? lis1)
+         lis2)
+        (else
+         (cons (car lis1)
+               (append2 (cdr lis1) lis2))))))
+
+;-----------------------------------SELECTORES-----------------------------------------------------------------
+
+; Dominio: Una lista con listas de tipo set de cartas (cardsSet)
+; Recorrido: Un número entero (int)
+; Descripción: Función que determina la cantidad de cartas que hay en el set creado
+; Tipo de recursión: Recursión de Cola
+(define numCards (lambda (lista)
+                   (numCardsAux lista 0)))
+(define numCardsAux (lambda (lista acum)
+                   (if (null? lista)
+                       acum
+                       (numCardsAux (cdr lista) (+ acum 1)))))
+
+; Dominio: Una lista con listas de tipo set de cartas y un número entero (cardsSet X int)
+; Recorrido: Una lista del tipo carta (card)
+; Descripcion: Función que obtiene la carta ubicada en la n-ésima posición (partiendo desde 0 hasta (totalCartas-1))
+; Tipo de recursion: Recursión de Cola
+(define nthCard (lambda (lista nth)
+                   (nthCardAux lista nth 0)))
+(define nthCardAux (lambda (lista nth acum)
+                   (if (= nth acum)
+                       (car lista)
+                       (nthCardAux (cdr lista) nth (+ acum 1)))))
+
+; Dominio: Una lista de tipo carta y un número entero (card X int)
+; Recorrido: Un número entero (int)
+; Descripción: Función que calcula el total de cartas que se deben producir para construir un conjunto válido
+; Tipo de recursión: No se utiliza recursión
+(define findTotalCards (lambda (carta)
+                         (+ (* (- (numCards carta) 1) (- (numCards carta) 1)) (- (numCards carta) 1) 1)))
+
+; Dominio: Una lista de tipo carta (card)
+; Recorrido: Un número entero (int)
+; Descripción: Función que calcula el total de elementos necesarios para poder construir un conjunto válido
+; Tipo de recursión: No se utiliza recursión
+(define requiredElements (lambda (carta)
+                           (+ (* (- (length carta) 1) (- (length carta) 1)) (- (length carta) 1) 1)))
+
+;-----------------------------------OTRAS FUNCIONES---------------------------------------------------------------
+
+; Dominio: Una lista con listas de tipo set de cartas (cardsSet)
+; Recorrido: Una cadena de texto (string)
+; Descripción: Función que crea un string que contiene todas las cartas y sus correspondientes símbolos
+; Tipo de recursión: Recursión de Cola
+(define cardSet->string (lambda (lista)
+                          (recorreLista lista 1)))
+(define recorreLista (lambda (lista acum)
+                       (if (null? (cdr lista))
+                            (string-append "Carta " (number->string acum) ": " (recorreAux (car lista)))
+                           (string-append "Carta " (number->string acum) ": " (recorreAux (car lista))
+                                          (recorreLista (cdr lista) (+ 1 acum))))))
+(define recorreAux (lambda (lista)
+                     (if (null? (cdr lista))
+                          (string-append (car lista) "\n")
+                         (string-append (car lista) ", " (recorreAux (cdr lista))))))
+
+
+
