@@ -20,7 +20,6 @@
           (firstCard (append2 carta (list (+ (length carta) 1))) numero))))
 
 ; Función auxiliar que crea la primera carta
-(define firstCardAux
 ; Función que construye N primeras cartas
 (define ConstructorNcards
      (lambda (carta largoLista numero)
@@ -51,6 +50,7 @@
         (else
          (cons (car lis1)
                (append2 (cdr lis1) lis2))))))
+; Función de prueba
 
 
 (define LenListAux

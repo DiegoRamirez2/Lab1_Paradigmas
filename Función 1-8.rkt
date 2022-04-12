@@ -52,8 +52,7 @@
 
 (define calculoValor (lambda (n i j k)
                        (+ (+ n 2) (* n (- k 1)) (modulo (+ (* (- i 1) (- k 1)) (- j 1)) n))))
-                       
-                                        
+                                                            
 (define append2 (lambda (lis1 lis2)
   (cond ((null? lis1)
          lis2)
