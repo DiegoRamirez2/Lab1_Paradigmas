@@ -1,14 +1,19 @@
 #lang racket
+(define L1 (list "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19" "20" "21" "22" "23" "24" "25" "26" "27" "28" "29" "30" "31" "32" "33" "34" "35" "36" "37" "38" "39" "40" "41" "42" "43" "44" "45" "46" "47" "48" "49" "50" "51" "52" "53" "54" "55" "56" "57"))
 ;-----------------------------------CONSTRUCTORES---------------------------------------------------------------
 
 ; Dominio: Una lista con elementos de tipo string, dos números enteros y una función random propia
 ; Recorrido: Set de cartas (cardsSet) del juego Dobble
-; Descripción: Crea una lista con sublistas que representan el mazo de cartas del juego Dobble
+; Descripción: Crea un tipo de dato cardsSet que representa el mazo de cartas del juego Dobble
 ; Tipo de Recursión: Recursión de Cola
 (define cardsSet (lambda (Elements numE maxC rndFn)
-                  (if (<= maxC 0)
-                      (totalCards (rndFn (subLista Elements (simbolsTotal (- numE 1)))))
-                      (subLista (totalCards (rndFn (subLista Elements (simbolsTotal (- numE 1))))) maxC))))
+                  (if (> (simbolsTotal (- numE 1)) (length Elements))
+                      null
+                      (if (< (simbolsTotal (- numE 1)) maxC)
+                          null
+                          (if (<= maxC 0)
+                               (append (rndFn (totalCards (subLista Elements (simbolsTotal (- numE 1)))) (+ 2 numE)) (list Elements))
+                               (append (subLista (rndFn (totalCards (subLista Elements (simbolsTotal (- numE 1)))) numE) maxC) (list Elements)))))))
 
 ; Función auxiliar que crea la primera carta
 (define firstCard (lambda (lista_elemento)
@@ -53,7 +58,7 @@
 (define subLista (lambda (lista numE)
                    (subListaAux lista numE 0)))
 (define subListaAux (lambda (lista numE acum)
-                      (if (= acum numE)
+                      (if (>= acum numE)
                           null
                           (cons (list-ref lista acum) (subListaAux lista numE (+ acum 1))))))
 
@@ -73,9 +78,78 @@
          (cons (car lis1)
                (append2 (cdr lis1) lis2))))))
 
+; Dominio: Un elemento del tipo de dato CardsSet
+; Recorrido: Un elemento del tipo de dato CardsSet
+; Descripción: Función que recibe un mazo de cartas, y retorna, en caso de que no sea válido, las cartas faltantes para que el caso sea válido
+; Recursión:
+(define missingCards (lambda (setCard)
+                       (if (equal? (cardsSet (car (reverse setCard)) (length (nthCard setCard 0)) (findTotalCards (nthCard setCard 0)) randomFn) '())
+                           null
+                           (set-subtract (cdr (reverse (cardsSet (car (reverse setCard)) (length (nthCard setCard 0)) (findTotalCards (nthCard setCard 0)) randomFn))) setCard))))
+
+;-----------------------------------PERTENENCIA---------------------------------------------------------------
+; Dominio:
+; Recorrido:
+; Descripción:
+; Recursión:
+(define dobble? (lambda (setCard)
+                  (if (null? setCard)
+                      #f
+                      (if (and (= (simbolsCard (length (car (reverse setCard)))) (length (car setCard))) (subset? setCard (cardsSet (car (reverse setCard)) (length (car setCard)) -1 randomFn)))
+                      (dobbleAux? (cdr (reverse setCard)))
+                      (dobbleAux? setCard)))))
+                                       
+
+(define dobbleAux? (lambda (setCard)
+                  (if (not (sameN setCard))
+                      #f
+                     (if (seRepite? setCard)
+                          #f
+                          (if (oneCommonElement? setCard)
+                              #t
+                              #f)))))
+
+(define seRepite? (lambda (setCard)
+                    (if (null? setCard)
+                        #f
+                        (if (seRepiteAux? (car setCard))
+                            #t
+                            (seRepite? (cdr setCard))))))
+
+(define seRepiteAux? (lambda (Card)
+                       (if (null? Card)
+                           #f
+                           (if (> (length (filter (lambda (x) (equal? (car Card) x)) Card)) 1)
+                               #t
+                               (seRepiteAux? (cdr Card))))))
+
+(define oneCommonElement? (lambda (setCard)
+                             (if (null? (cdr setCard))
+                                 #t
+                                 (if (not (oneCommonElementAux? (car setCard) (cdr setCard)))
+                                     #f
+                                     (oneCommonElement? (cdr setCard))))))
+
+(define oneCommonElementAux? (lambda (Card setCard)
+                               (if (null? setCard)
+                                   #t
+                                   (if (> (length (set-intersect Card (car setCard))) 1)
+                                       #f
+                                       (oneCommonElementAux? Card (cdr setCard))))))
+                                     
+(define sameN (lambda (setCard)
+                (sameNaux (car setCard) (cdr setCard))))
+
+(define sameNaux (lambda (Card setCard)
+                   (if (null? setCard)
+                       #t
+                       (if (not (= (length Card) (length (car setCard))))
+                           #f
+                           (sameNaux Card (cdr setCard))))))
+
 ;-----------------------------------SELECTORES-----------------------------------------------------------------
 
-; Dominio: Una lista con listas de tipo set de cartas (cardsSet)
+; Dominio: Un elemento del tipo de dato cardsSet
 ; Recorrido: Un número entero (int)
 ; Descripción: Función que determina la cantidad de cartas que hay en el set creado
 ; Tipo de recursión: Recursión de Cola
@@ -117,17 +191,46 @@
 ; Recorrido: Una cadena de texto (string)
 ; Descripción: Función que crea un string que contiene todas las cartas y sus correspondientes símbolos
 ; Tipo de recursión: Recursión de Cola
-(define cardSet->string (lambda (lista)
-                          (recorreLista lista 1)))
+(define cardsSet->string (lambda (lista)
+                          (if (null? lista)
+                              null
+                              (recorreLista lista 1))))
 (define recorreLista (lambda (lista acum)
-                       (if (null? (cdr lista))
-                            (string-append "Carta " (number->string acum) ": " (recorreAux (car lista)))
-                           (string-append "Carta " (number->string acum) ": " (recorreAux (car lista))
+                       (if (null? (cddr lista))
+                            (string-append "Carta " (myNum->string acum) ": " (recorreAux (car lista)))
+                           (string-append "Carta " (myNum->string acum) ": " (recorreAux (car lista))
                                           (recorreLista (cdr lista) (+ 1 acum))))))
 (define recorreAux (lambda (lista)
                      (if (null? (cdr lista))
-                          (string-append (car lista) "\n")
-                         (string-append (car lista) ", " (recorreAux (cdr lista))))))
+                          (string-append (myNum->string (car lista)) "\n")
+                         (string-append (myNum->string (car lista)) ", " (recorreAux (cdr lista))))))
 
+(define myNum->string (lambda (elemento)
+                    (if (number? elemento)
+                        (number->string elemento)
+                        (elemento))))
 
+; Dominio: Una lista con sublistas que contienen elementos (list X list)
+; Recorrido: Una lista con sublistas re-posicionadas (list X list)
+; Descripción: Función que re-posiciona los elementos, primero los de índice par y luego los de índice impar dado un número de veces
+; Recursión: Recursión de Cola
+(define randomFn (lambda (lista numero)
+                   (if (= numero 0)
+                       lista
+                        (randomFn (suffleList lista) (- numero 1)))))
 
+(define suffleList (lambda (lista)
+                     (append (suffleListPar lista 0) (suffleListImpar lista 1))))
+                    
+(define suffleListPar (lambda (lista acum)
+                        (if (>= acum (length lista))
+                            null
+                            (cons (list-ref lista acum) (suffleListPar lista (+ acum 2))))))
+
+(define suffleListImpar (lambda (lista acum)
+                        (if (>= acum (length lista))
+                            null
+                            (cons (list-ref lista acum) (suffleListImpar lista (+ acum 2))))))
+
+; Se utiliza provide para poder utilizar al TDA y sus funciones en otros archivos
+(provide (all-defined-out))
